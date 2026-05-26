@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(git *)",
+      "Bash(yarn lint:*)",
+      "Bash(yarn eslint:*)",
+      "Bash(yarn tsc:*)",
+      "mcp__azure-devops__wit_query_by_wiql",
+      "mcp__azure-devops__wit_get_work_items_batch_by_ids",
+      "mcp__azure-devops__wit_get_work_item",
+      "mcp__azure-devops__wit_update_work_item",
+      "mcp__azure-devops__wit_my_work_items",
+      "mcp__azure-devops__repo_get_branch_by_name",
+      "mcp__azure-devops__repo_create_branch",
+      "mcp__azure-devops__repo_create_pull_request",
+      "mcp__serena__initial_instructions",
+      "mcp__serena__onboarding",
+      "mcp__serena__list_memories",
+      "mcp__serena__find_symbol",
+      "mcp__serena__get_symbols_overview",
+      "mcp__serena__find_referencing_symbols"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"{{FRONTEND_ROOT}}/.claude/hooks/scripts/ado_protect_paths.py\"",
+            "timeout": 30
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"{{FRONTEND_ROOT}}/.claude/hooks/scripts/ado_guard_shell.py\"",
+            "timeout": 30
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__azure-devops__wit_update_work_item|mcp__azure-devops__repo_create_branch|mcp__azure-devops__repo_create_pull_request",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"{{FRONTEND_ROOT}}/.claude/hooks/scripts/ado_guard_mcp_ado.py\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"{{FRONTEND_ROOT}}/.claude/hooks/scripts/ado_after_edit_context.py\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

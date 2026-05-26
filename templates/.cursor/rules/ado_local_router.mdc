@@ -1,0 +1,27 @@
+---
+description: ADO task start/list/finish shortcuts routing to local Claude skills
+globs: frontend/**/*
+alwaysApply: true
+---
+
+- **Purpose**
+  - Route short commands and natural language to the ADO frontend skill flows.
+
+- **Task list routing**
+  - When the user says `tasks`, `my tasks`, `show tasks`, or similar → use the `frontend/.claude/skills/tasks/SKILL.md` flow.
+  - This step shows only the assigned work item list. Do not change state or create branches.
+
+- **Task start routing**
+  - When the user says `pickup`, `start task`, `begin work`, or similar → use the `frontend/.claude/skills/pickup/SKILL.md` flow.
+  - If a number is included in the message, treat it as the work item candidate.
+  - Always ask for explicit user confirmation before starting.
+
+- **Task finish routing**
+  - When the user says `finish`, `wrap up`, `commit`, `create PR`, or similar → use the `frontend/.claude/skills/finish/SKILL.md` flow.
+  - If a number is included, treat it as the work item number.
+  - Always require user completion approval before commit/push/Draft PR.
+
+- **Common guardrails**
+  - Always follow `frontend/.claude/skills/ado-guardrails/SKILL.md` rules first.
+  - Start flow: maintain branch creation rules and dirty tree stop rule.
+  - Finish flow: maintain reviewer, verification summary, approval token, and Draft PR rules.

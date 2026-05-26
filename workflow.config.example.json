@@ -1,0 +1,16 @@
+{
+  "_comment": "Copy this file to workflow.config.json and fill in your values. Never commit workflow.config.json.",
+  "product_code": "MY-PRODUCT",
+  "scope_code": "FE",
+  "ado_org": "your-org",
+  "ado_project": "YOUR_PROJECT",
+  "repo_root": "/absolute/path/to/your/repo",
+  "frontend_root": "/absolute/path/to/your/repo/frontend",
+  "work_path": "src/products/my-product",
+  "base_branch": "product/my-product/main",
+  "branch_prefix": "product/my-product",
+  "forbidden_paths": [
+    "src/pages",
+    "src/shared"
+  ]
+}

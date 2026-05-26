@@ -1,0 +1,76 @@
+---
+description: Frontend commit/PR title/body writing rules
+globs: frontend/**/*, report/**/*
+alwaysApply: true
+---
+
+- **Purpose**
+  - Keep commit and PR messages consistent across the team.
+
+- **Basic principle**
+  - Frontend scope code is always `[{{SCOPE_CODE}}]`.
+  - Context prefix uses the product code: `[{{PRODUCT_CODE}}]`.
+  - Default prefix: `[{{PRODUCT_CODE}}][{{SCOPE_CODE}}]`
+
+- **Commit message format**
+  - `[{{PRODUCT_CODE}}][{{SCOPE_CODE}}]<emoji><type>: <subject> [#work-item]`
+  - `emoji` and `type` must be written together without a space.
+  - Strictly use 1:1 type/emoji mapping (no mixing).
+  - `subject` should be concise, current-tense, factual. No trailing period.
+  - No exaggerated or vague expressions — describe what actually changed.
+
+- **Type/emoji mapping**
+  - `✨feat`: new user-facing feature
+  - `🐛fix`: bug fix
+  - `♻️refactor`: behavior-preserving structural improvement
+  - `💄feat`: UI/style improvement
+  - `🌐update`: i18n resource change
+  - `📦update`: frontend dependency update
+  - `✅test`: add or update tests
+  - `📝docs`: documentation change
+  - `🔧chore`: build/config/tooling change
+  - `🔥remove`: code or file removal
+
+- **Type selection criteria**
+  - `feat`: a user-visible behavior or feature is added
+  - `fix`: a previously working behavior is broken and fixed
+  - `refactor`: external behavior unchanged, internal structure improved
+  - `update`: library or i18n resource updated
+  - `chore`: non-product config or infrastructure change
+
+- **PR title format**
+  - `[{{PRODUCT_CODE}}][{{SCOPE_CODE}}]<emoji><type>: <summary> [#work-item]`
+  - Omit `[#work-item]` if no work item is associated.
+
+- **PR body template**
+  - Use the template below as the default.
+  - For complex changes, add `Background`, `Root Cause`, `Fix Approach`, `Test Details`, `Risk/Rollback Plan` sections as needed.
+
+```markdown
+## Summary
+<!--- Describe why this change is needed and what problem it solves. -->
+- Description
+    - NA
+- Intent
+    - NA
+- Effects
+    - NA
+
+## Related Work Item
+<!--- Link the work item here -->
+
+## PR Checklist
+- [ ] I have reviewed my own code.
+- [ ] I have added comments where the logic is not obvious.
+- [ ] I have added or updated tests that prove this fix/feature works.
+
+## Screenshots (if applicable)
+```
+
+- **Examples**
+  - Commit
+    - `[{{PRODUCT_CODE}}][{{SCOPE_CODE}}]🐛fix: fix patient info panel alignment [#65725]`
+    - `[{{PRODUCT_CODE}}][{{SCOPE_CODE}}]💄feat: improve right panel typography readability`
+    - `[{{PRODUCT_CODE}}][{{SCOPE_CODE}}]📦update: update react-query version`
+  - PR title
+    - `[{{PRODUCT_CODE}}][{{SCOPE_CODE}}]🐛fix: Figma update — fix result panel Patient Info text overflow and alignment [#65725]`
