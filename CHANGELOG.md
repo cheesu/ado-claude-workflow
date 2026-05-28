@@ -80,6 +80,52 @@ ADO Claude Workflow Toolkit의 변경 히스토리.
 
 ---
 
+## 2026-05-28
+
+### 버그 수정 4건 — 초기 릴리즈 검토 후 발견
+
+**변경 파일**
+- `templates/.claude/hooks/scripts/ado_guard_shell.py`
+- `install.sh`
+
+**변경 내용**
+
+1. **`git clean -fdx` 가드 누락 수정** (`ado_guard_shell.py`)
+   - 기존 정규식 `-f[dx]?`는 `-f`, `-fd`, `-fx` 만 매칭하고 `-fdx`(플래그 2개 조합)는 통과시켰음
+   - `-[fdx]*f[fdx]*`로 변경 → `-f`, `-fd`, `-fx`, `-fdx`, `-xf`, `-df` 등 모든 순서 조합 차단
+
+2. **`PROTECTED_LOCAL_ONLY_PATHS` `frontend/` 하드코딩 제거** (`ado_guard_shell.py`)
+   - `'frontend/.claude/settings.local.json'` 등 경로가 `frontend`라는 디렉토리 이름에 고정되어 있었음
+   - `frontend_root`가 `fe/`, `web/`, `apps/frontend/` 등 다른 이름으로 설치되면 로컬 전용 파일 커밋 차단 훅이 동작하지 않는 문제
+   - `_local_only_paths()` 함수로 대체: `FRONTEND_ROOT.relative_to(REPO_ROOT)`로 런타임에 경로 계산
+   - `FRONTEND_ROOT`가 `REPO_ROOT` 하위가 아닌 경우 `ValueError`를 잡아 빈 set으로 안전하게 fallback
+
+3. **Python heredoc 따옴표 취약점 수정** (`install.sh`)
+   - `forbidden_paths` 치환 시 `$FORBIDDEN_PREFIXES_LIST`를 Python 트리플 따옴표 문자열에 직접 shell-interpolation하는 방식이었음
+   - 경로명에 작은따옴표(`'`) 또는 `'''`가 포함되면 Python 문자열 리터럴이 깨져 설치 실패
+   - 임시 파일에 `printf '%s'`로 안전하게 기록 후 `sys.argv[2]`로 전달하는 방식으로 교체
+   - 설치 완료 후 `rm -f "$TMPFILE"`으로 정리
+
+4. **`--help`/`-h` 플래그 구현** (`install.sh`)
+   - 필수 값 누락 시 오류 메시지에 `--help`를 쓰라고 안내하고 있었으나 실제로는 `Unknown argument: --help`로 에러가 발생하는 불일치
+   - 모든 옵션(`--config`, `--target`, `--product-code` 등) 설명을 포함한 help 출력 구현
+
+**변경 이유**
+
+- 초기 릴리즈(`3d2c111`) 코드 리뷰 중 발견한 결함들
+- 버그 1: `git clean -fdx`는 실무에서 가장 자주 쓰는 강한 변형이라 가드 누락이 실질적 위험
+- 버그 2: 이 툴킷은 다양한 frontend 디렉토리 이름을 지원하는 것이 목적이므로 `frontend/` 하드코딩은 설계 목적 자체에 위배
+- 버그 3: 경로에 특수문자가 포함된 프로젝트에서 install.sh 자체가 실패하는 치명적 케이스
+- 버그 4: 사용자 경험 불일치 — 도움 요청 시 에러가 나면 안 됨
+
+**리스크 검토**
+
+- `_local_only_paths()`: `FRONTEND_ROOT.relative_to(REPO_ROOT)` 실패 시 빈 set 반환 → 기존 동작보다 느슨해지지 않으며 보호만 해제되므로 fail-open 수준의 안전한 fallback
+- `git clean` 정규식 강화: 기존에 허용되던 정상 명령이 새로 차단되는 케이스 없음 (f 플래그를 가진 clean 명령은 어떤 순서든 위험)
+- `install.sh` heredoc 교체: Python 동작 결과 동일, 입력 전달 경로만 변경
+
+---
+
 ## 2026-04-30 (3) — 원본 프로젝트에서 승계
 
 ### WORKFLOW.md / MODEL_SPLIT.md — Light mode 경로 문서화
