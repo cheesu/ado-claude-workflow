@@ -51,6 +51,37 @@ while [[ $# -gt 0 ]]; do
     --branch-prefix)   BRANCH_PREFIX="$2"; shift 2 ;;
     --forbidden-paths) FORBIDDEN_PATHS="$2"; shift 2 ;;
     --dry-run)         DRY_RUN=true; shift ;;
+    --help|-h)
+      echo "Usage: ./install.sh --config workflow.config.json [--dry-run]"
+      echo ""
+      echo "Or pass values directly:"
+      echo "  ./install.sh \\"
+      echo "    --target /path/to/frontend \\"
+      echo "    --product-code MY-PRODUCT \\"
+      echo "    --scope-code FE \\"
+      echo "    --ado-org your-org \\"
+      echo "    --ado-project YOUR_PROJECT \\"
+      echo "    --repo-root /path/to/repo \\"
+      echo "    --work-path \"src/products/my-product\" \\"
+      echo "    --base-branch \"product/my-product/main\" \\"
+      echo "    --branch-prefix \"product/my-product\" \\"
+      echo "    --forbidden-paths \"src/pages,src/shared\""
+      echo ""
+      echo "Options:"
+      echo "  --config           Path to workflow.config.json (JSON with all fields)"
+      echo "  --target           Absolute path to the frontend root directory"
+      echo "  --product-code     Product identifier (e.g. MY-PRODUCT)"
+      echo "  --scope-code       Scope tag for commit messages (default: FE)"
+      echo "  --ado-org          Azure DevOps organization name"
+      echo "  --ado-project      Azure DevOps project name"
+      echo "  --repo-root        Absolute path to the git repo root"
+      echo "  --work-path        Relative path within frontend for product code (e.g. src/products/my-product)"
+      echo "  --base-branch      Base branch name (e.g. product/my-product/main)"
+      echo "  --branch-prefix    Work branch prefix (e.g. product/my-product)"
+      echo "  --forbidden-paths  Comma-separated relative paths to block edits (e.g. src/pages,src/shared)"
+      echo "  --dry-run          Print resolved config without writing any files"
+      exit 0
+      ;;
     *) echo "Unknown argument: $1"; exit 1 ;;
   esac
 done
@@ -176,17 +207,23 @@ if ! $DRY_RUN; then
       "$file"
   done
 
-  # Substitute multiline forbidden prefixes list in protect_paths.py
+  # Substitute multiline forbidden prefixes list in protect_paths.py.
+  # We write the replacement value to a temp file to avoid shell-quoting issues
+  # (heredoc expansion and triple-quoted strings break when the value contains
+  # single quotes or backslashes).
   PROTECT_SCRIPT="$FRONTEND_ROOT/.claude/hooks/scripts/ado_protect_paths.py"
   if [[ -n "$FORBIDDEN_PREFIXES_LIST" ]]; then
-    # Use Python for multiline substitution (sed handles this poorly)
-    python3 - <<PYEOF
-import re, pathlib
-path = pathlib.Path('$PROTECT_SCRIPT')
-content = path.read_text()
-content = content.replace('{{FORBIDDEN_PREFIXES_LIST}}', '''$FORBIDDEN_PREFIXES_LIST''')
-path.write_text(content)
+    TMPFILE="$(python3 -c "import tempfile, os; f=tempfile.NamedTemporaryFile(delete=False); print(f.name)")"
+    printf '%s' "$FORBIDDEN_PREFIXES_LIST" > "$TMPFILE"
+    python3 - "$PROTECT_SCRIPT" "$TMPFILE" <<'PYEOF'
+import sys, pathlib
+script_path = pathlib.Path(sys.argv[1])
+replacement = pathlib.Path(sys.argv[2]).read_text(encoding='utf-8')
+content = script_path.read_text(encoding='utf-8')
+content = content.replace('{{FORBIDDEN_PREFIXES_LIST}}', replacement)
+script_path.write_text(content, encoding='utf-8')
 PYEOF
+    rm -f "$TMPFILE"
   fi
 
   # Generate settings.local.json from template

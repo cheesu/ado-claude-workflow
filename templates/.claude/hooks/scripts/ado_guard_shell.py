@@ -24,18 +24,27 @@ BRANCH_RE = re.compile(
   r'^{{BRANCH_PREFIX}}/(feature|fix|refactor|update|test|docs|chore)/\d+$',
 )
 
-# Files that exist only locally and must never be committed
-PROTECTED_LOCAL_ONLY_PATHS = {
-  '.gitignore',
-  'frontend/.claude/settings.local.json',
-  'frontend/.cursor/rules/commit_pr_guide.mdc',
-  # Add project-specific local-only files here
-}
+# Files that exist only locally and must never be committed.
+# Paths are relative to REPO_ROOT (as git diff --cached --name-only reports them).
+def _local_only_paths() -> set[str]:
+  try:
+    rel = FRONTEND_ROOT.relative_to(REPO_ROOT)
+  except ValueError:
+    # FRONTEND_ROOT is not under REPO_ROOT — fall back to empty set
+    return set()
+  return {
+    '.gitignore',
+    str(rel / '.claude' / 'settings.local.json'),
+    str(rel / '.cursor' / 'rules' / 'commit_pr_guide.mdc'),
+    # Add project-specific local-only files here
+  }
+
+PROTECTED_LOCAL_ONLY_PATHS = _local_only_paths()
 
 DESTRUCTIVE_PATTERNS = [
   re.compile(r'(^|[;&\s])git\s+reset\s+--hard(\s|$)', re.IGNORECASE),
   re.compile(r'(^|[;&\s])git\s+checkout\s+--(\s|$)', re.IGNORECASE),
-  re.compile(r'(^|[;&\s])git\s+clean\s+-f[dx]?(\s|$)', re.IGNORECASE),
+  re.compile(r'(^|[;&\s])git\s+clean\s+-[fdx]*f[fdx]*(\s|$)', re.IGNORECASE),
   re.compile(r'(^|[;&\s])git\s+push(?:\s+\S+)*\s+--force(\s|$)', re.IGNORECASE),
   re.compile(r'(^|[;&\s])git\s+push(?:\s+\S+)*\s+-f(\s|$)', re.IGNORECASE),
   # Force-delete local branch
